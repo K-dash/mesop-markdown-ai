@@ -58,8 +58,11 @@ def page():
                         message="Hide preview" if state.show_preview else "Show preview"
                     ):
                         me.icon(icon="hide_image")
+                with me.content_button(on_click=on_click_delete):
+                    with me.tooltip(message="Delete note"):
+                        me.icon(icon="delete")
                 with me.content_button(on_click=on_click_prompt):
-                    with me.tooltip(message="Show LLM"):
+                    with me.tooltip(message="Show prompt"):
                         me.icon(icon="chat")
 
             # Note list and prompt container
@@ -103,13 +106,10 @@ def page():
 def on_title_input(e: me.InputEvent):
     state = me.state(State)
     state.notes[state.selected_note_index].title = e.value
-    state.selected_note_title = state.notes[state.selected_note_index].title
-    print(state.notes)
 
 
 def on_prompt_input(e: me.InputEvent):
     state = me.state(State)
-    print(f"{state.additional_prompt=}")
     state.additional_prompt = e.value
 
 
@@ -125,18 +125,19 @@ def on_click_new(e: me.ClickEvent):
     # Need to update the initial value of the editor text area so we can
     # trigger a diff to reset the editor to empty. Need to yield this change.
     # for this to work.
-    state.selected_note_content = state.notes[state.selected_note_index].content
-    state.selected_note_title = state.notes[state.selected_note_index].title
-    print(f"click new title{state.selected_note_title}")
-    print(f"click new content{state.selected_note_content}")
-    yield
+    if state.notes:
+        state.selected_note_content = state.notes[state.selected_note_index].content
+        state.selected_note_title = state.notes[state.selected_note_index].title
+        print(f"click new title{state.selected_note_title}")
+        print(f"click new content{state.selected_note_content}")
+        # yield
     # Reset the initial value of the editor text area to empty since the new note
     # has no content.
-    state.selected_note_content = ""
+    state.selected_note_content = settings.default_content
     state.selected_note_title = ""
-    state.notes.append(Note())
+    state.notes.append(Note(content=settings.default_content))
     state.selected_note_index = len(state.notes) - 1
-    yield
+    # yield
 
 
 def on_click_hide(e: me.ClickEvent):
@@ -200,3 +201,17 @@ def on_click_clear(e: me.ClickEvent):
     state.clear_prompt_count += 1
     print(f"{state.additional_prompt=}")
     state.additional_prompt = ""
+
+
+def on_click_delete(e: me.ClickEvent):
+    """Click event for deleting a note."""
+    state = me.state(State)
+    if state.notes:
+        state.selected_note_content = state.notes[state.selected_note_index - 1].content
+        state.selected_note_title = state.notes[state.selected_note_index - 1].title
+    del state.notes[state.selected_note_index]
+    if state.notes:
+        state.selected_note_index -= 1
+    else:
+        state.selected_note_content = ""
+        state.selected_note_title = ""
