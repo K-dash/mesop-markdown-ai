@@ -25,7 +25,7 @@ class State:
     selected_note_title: str = ""
     show_preview: bool = True
     additional_prompt: str = ""
-    show_llm: bool = False
+    show_prompt: bool = False
     clear_prompt_count: int = 0
 
 
@@ -66,7 +66,7 @@ def page():
                         me.icon(icon="chat")
 
             # Note list and prompt container
-            if state.show_llm:
+            if state.show_prompt:
                 with me.box():
                     me.textarea(
                         label="プロンプト",
@@ -115,13 +115,14 @@ def on_prompt_input(e: me.InputEvent):
 
 def on_click_prompt(e: me.ClickEvent):
     state = me.state(State)
-    print(f"{state.show_llm=}")
-    state.show_llm = bool(not state.show_llm)
-    print(f"{state.show_llm=}")
+    print(f"{state.show_prompt=}")
+    state.show_prompt = bool(not state.show_prompt)
+    print(f"{state.show_prompt=}")
 
 
 def on_click_new(e: me.ClickEvent):
     state = me.state(State)
+    state.show_prompt = False
     # Need to update the initial value of the editor text area so we can
     # trigger a diff to reset the editor to empty. Need to yield this change.
     # for this to work.
@@ -130,14 +131,14 @@ def on_click_new(e: me.ClickEvent):
         state.selected_note_title = state.notes[state.selected_note_index].title
         print(f"click new title{state.selected_note_title}")
         print(f"click new content{state.selected_note_content}")
-        # yield
+        yield
     # Reset the initial value of the editor text area to empty since the new note
     # has no content.
     state.selected_note_content = settings.default_content
     state.selected_note_title = ""
     state.notes.append(Note(content=settings.default_content))
     state.selected_note_index = len(state.notes) - 1
-    # yield
+    yield
 
 
 def on_click_hide(e: me.ClickEvent):
@@ -166,8 +167,8 @@ def on_text_input(e: me.InputEvent):
 def on_click_submit(e: me.ClickEvent):
     state = me.state(State)
     openai.api_key = settings.open_api_key
-    prompt = settings.default_prompt_for_content.format(
-        note_title=state.selected_note_title,
+    prompt = settings.base_prompt.format(
+        note_title=state.notes[state.selected_note_index].title,
         default_content=settings.default_content if state.selected_note_content else "",
         note_content=state.selected_note_content,
         additional_prompt=state.additional_prompt,
@@ -180,9 +181,7 @@ def on_click_submit(e: me.ClickEvent):
         messages=[
             {
                 "role": "system",
-                "content": """
-                You are a highly skilled assistant tasked with generating a blog post.
-                """,
+                "content": settings.role_prompt,
             },
             {"role": "user", "content": prompt},
         ],
@@ -190,8 +189,10 @@ def on_click_submit(e: me.ClickEvent):
         # max_tokens=
     )
     data = response.choices[0].message.content
+    # data = "hoge"
     state.selected_note_content = data
-    print(state.selected_note_content)
+    on_text_input(me.InputEvent(key="response", value=data))
+    # print(state.selected_note_content)
     # state.selected_note_content = state.selected_note_content
 
 
@@ -206,6 +207,7 @@ def on_click_clear(e: me.ClickEvent):
 def on_click_delete(e: me.ClickEvent):
     """Click event for deleting a note."""
     state = me.state(State)
+    state.show_prompt = False
     if state.notes:
         state.selected_note_content = state.notes[state.selected_note_index - 1].content
         state.selected_note_title = state.notes[state.selected_note_index - 1].title
