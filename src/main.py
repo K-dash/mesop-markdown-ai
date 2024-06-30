@@ -51,19 +51,24 @@ def page():
             # Toolbar
             with me.box(style=style.TOOLBAR):
                 with me.content_button(on_click=on_click_new):
-                    with me.tooltip(message="New note"):
+                    with me.tooltip(message="記事の追加"):
                         me.icon(icon="add_notes")
                 with me.content_button(on_click=on_click_hide):
                     with me.tooltip(
-                        message="Hide preview" if state.show_preview else "Show preview"
+                        message="プレビューの非表示"
+                        if state.show_preview
+                        else "プレビューの表示"
                     ):
                         me.icon(icon="hide_image")
                 with me.content_button(on_click=on_click_delete):
-                    with me.tooltip(message="Delete note"):
+                    with me.tooltip(message="記事の削除"):
                         me.icon(icon="delete")
                 with me.content_button(on_click=on_click_prompt):
-                    with me.tooltip(message="Show prompt"):
+                    with me.tooltip(message="プロンプトを表示"):
                         me.icon(icon="chat")
+                with me.content_button(on_click=on_click_prompt):
+                    with me.tooltip(message="記事の評価"):
+                        me.icon(icon="find_in_page")
 
             # Note list and prompt container
             if state.show_prompt:
@@ -74,8 +79,8 @@ def page():
                         on_input=on_prompt_input,
                         style=style.PROMPT_INPUT,
                     )
-                    me.button(label="Submit", type="flat", on_click=on_click_submit)
-                    me.button(label="Clear", on_click=on_click_clear)
+                    me.button(label="送信", type="flat", on_click=on_click_submit)
+                    me.button(label="消去", on_click=on_click_clear)
             else:
                 for index, note in enumerate(state.notes):
                     with me.box(
