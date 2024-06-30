@@ -21,7 +21,7 @@ def style_container(show_preview: bool = True) -> me.Style:
 def style_note_row(selected: bool = False) -> me.Style:
     return me.Style(
         color=_NOTE_ROW_FONT_COLOR,
-        font_size=_NOTE_ROW_FONT_SIZE,
+        font_size="20px",
         background=_SELECTED_ROW_BACKGROUND_COLOR if selected else "none",
         padding=me.Padding.all(10),
         border=me.Border(bottom=_DEFAULT_BORDER_STYLE),
